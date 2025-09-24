@@ -1,11 +1,21 @@
-<script setup lang="ts"></script>
+<!-- App.vue de Preuba para Vuetify -->
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const rating = ref(4.5)
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <v-container>
+    <v-btn color="primary">
+      Test Button
+    </v-btn>
+    <v-rating
+      v-model="rating"
+      color="orange"
+      half-increments
+    />
+  </v-container>
 </template>
 
 <style scoped></style>
