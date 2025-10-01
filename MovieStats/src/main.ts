@@ -19,17 +19,36 @@ const vuetify = createVuetify({
   directives,
   // Personalizacion de paleta de colores segun nuestro prototipo
   theme: {
-    defaultTheme: 'moviestats',
+    defaultTheme: 'light',
     themes: {
-      moviestats: {
+      dark: {
         dark: true,
         colors: {
-          primary: '#00CED1', // Tu cyan
-          secondary: '#1a237e', // Tu azul marino
-          background: '#0D1117', // Tu negro noche
-          surface: '#1a237e',
-          'on-primary': '#FFFFFF',
-          'on-surface': '#F8F9FA'
+          primary: '#00CED1',
+          secondary: '#1a237e',
+          accent: '#FFD700',
+          background: '#0D1117',
+          surface: '#1f2937',
+          'on-primary': '#000000',
+          'on-secondary': '#FFFFFF',
+          'on-accent': '#000000',
+          'on-surface': '#FFFFFF',
+          'on-background': '#FFFFFF'
+        }
+      },
+      light: {
+        dark: false,
+        colors: {
+          primary: '#00CED1',
+          secondary: '#1a237e',
+          accent: '#FFD700',
+          background: '#FFFFFF',
+          surface: '#F5F5F5',
+          'on-primary': '#000000',
+          'on-secondary': '#FFFFFF',
+          'on-accent': '#000000',
+          'on-surface': '#000000',
+          'on-background': '#000000'
         }
       }
     }
@@ -43,5 +62,7 @@ const app = createApp(App)
 app.use(vuetify)
 app.use(createPinia())
 app.use(router)
+
+app.provide('vuetify', vuetify)
 
 app.mount('#app')
