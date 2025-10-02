@@ -18,8 +18,11 @@ const vuetify = createVuetify({
   components,
   directives,
   // Personalización de paleta de colores basada en los estilos de RegisterView.vue (modo oscuro con dorados)
+  // Se establece defaultTheme a 'system' para que Vuetify detecte automáticamente el esquema de color
+  // del sistema operativo o navegador (modo claro u oscuro) y aplique el tema correspondiente.
+  // Esto permite usar tus colores personalizados para modo claro y oscuro sin necesidad de cambiar manualmente.
   theme: {
-    defaultTheme: 'dark',
+    defaultTheme: 'system',
     variations: false,
     themes: {
       dark: {

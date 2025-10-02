@@ -167,7 +167,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-
 const router = useRouter()
 
 // Referencias reactivas
@@ -279,6 +278,7 @@ const goBack = () => {
 }
 </script>
 
+
 <style scoped>
 /* Fondo principal */
 .register-bg {
@@ -388,6 +388,12 @@ const goBack = () => {
 /* Override label color when input is filled or focused */
 :deep(.custom-field .v-label.v-label--active) {
   color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* Override browser autofill background and text color */
+:deep(.custom-field input:-webkit-autofill) {
+  box-shadow: 0 0 0px 1000px rgb(var(--v-theme-surface)) inset !important;
+  -webkit-text-fill-color: rgb(var(--v-theme-on-surface)) !important;
 }
 
 /* Botón crear cuenta */
