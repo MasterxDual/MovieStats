@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <v-app style="background-color: #0D1117; min-height: 100vh;">
+  <v-app>
     <router-view />
   </v-app>
 </template>

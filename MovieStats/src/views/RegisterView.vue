@@ -1,8 +1,7 @@
 <template>
   <!-- Componente principal de registro de usuario -->
-  <v-app>
-    <!-- Contenedor principal con fondo negro -->
-    <v-main class="register-bg">
+  <!-- Contenedor principal con fondo negro -->
+  <v-main class="register-bg">
       <!-- Contenedor fluido que ocupa toda la altura -->
       <v-container fluid class="fill-height pa-0">
         <!-- Sección del header con botón para volver al inicio -->
@@ -61,7 +60,6 @@
                         :rules="nameRules"
                         hide-details="auto"
                         class="custom-field"
-                        color="#D4AF37"
                       />
                     </div>
 
@@ -77,7 +75,6 @@
                         :rules="emailRules"
                         hide-details="auto"
                         class="custom-field"
-                        color="#D4AF37"
                       />
                     </div>
 
@@ -93,7 +90,6 @@
                         :rules="passwordRules"
                         hide-details="auto"
                         class="custom-field"
-                        color="#D4AF37"
                         :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                         @click:append-inner="showPassword = !showPassword"
                       />
@@ -111,7 +107,6 @@
                         :rules="confirmPasswordRules"
                         hide-details="auto"
                         class="custom-field"
-                        color="#D4AF37"
                         :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
                         @click:append-inner="showConfirmPassword = !showConfirmPassword"
                       />
@@ -167,7 +162,6 @@
         </template>
       </v-snackbar>
     </v-main>
-  </v-app>
 </template>
 
 <script setup>
@@ -288,7 +282,7 @@ const goBack = () => {
 <style scoped>
 /* Fondo principal */
 .register-bg {
-  background: #000000;
+  background-color: rgb(var(--v-theme-background));
   min-height: 100vh;
 }
 
@@ -301,14 +295,14 @@ const goBack = () => {
 }
 
 .back-btn {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(var(--v-theme-on-background), 0.7) !important;
   font-size: 14px !important;
   text-transform: none !important;
   font-weight: normal !important;
 }
 
 .back-btn:hover {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(var(--v-theme-on-background), 0.9) !important;
 }
 
 /* Contenido principal */
@@ -324,14 +318,14 @@ const goBack = () => {
 .cinema-logo {
   font-size: 2rem !important;
   font-weight: 700 !important;
-  color: #e1a40c !important;
+  color: rgb(var(--v-theme-accent)) !important;
   margin-bottom: 0 !important;
   letter-spacing: -0.5px;
 }
 
 /* Card principal */
 .register-card {
-  background-color: #1a1a1a !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
   border: 1px solid rgba(75, 85, 99, 0.3);
   max-width: 500px;
   margin: 0 auto;
@@ -339,21 +333,20 @@ const goBack = () => {
 
 /* Títulos */
 .form-title {
-  color: #F9FAFB !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   font-size: 1.5rem !important;
-  /* font-weight: 600 !important; */
   margin-bottom: 8px !important;
 }
 
 .form-subtitle {
-  color: rgba(249, 250, 251, 0.8) !important;
+  color: rgba(var(--v-theme-on-surface), 0.8) !important;
   font-size: 0.9rem !important;
   line-height: 1.3;
 }
 
 /* Labels de campos */
 .field-label {
-  color: #F9FAFB !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   font-size: 0.9rem !important;
   font-weight: 500 !important;
   margin-bottom: 8px;
@@ -362,8 +355,7 @@ const goBack = () => {
 
 /* Campos de texto personalizados */
 :deep(.custom-field .v-field) {
-  background-color: #1a1a1a !important;
-  /* background-color: rgba(31, 41, 55, 0.8) !important; */
+  background-color: rgb(var(--v-theme-surface)) !important;
   border-radius: 8px !important;
 }
 
@@ -373,30 +365,35 @@ const goBack = () => {
 }
 
 :deep(.custom-field .v-field--focused .v-field__outline) {
-  --v-field-border-color: #D4AF37;
+  --v-field-border-color: rgb(var(--v-theme-primary)) !important;
   --v-field-border-width: 2px;
 }
 
 :deep(.custom-field .v-field__input) {
-  color: #F9FAFB !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   font-size: 0.9rem !important;
   padding: 10px 14px !important;
   min-height: 44px !important;
 }
 
 :deep(.custom-field .v-field__input::placeholder) {
-  color: rgba(156, 163, 175, 0.8) !important;
+  color: rgba(var(--v-theme-on-surface), 0.5) !important;
 }
 
 :deep(.custom-field .v-field__append-inner) {
-  color: rgba(156, 163, 175, 0.8) !important;
+  color: rgba(var(--v-theme-on-surface), 0.7) !important;
   padding-right: 12px;
+}
+
+/* Override label color when input is filled or focused */
+:deep(.custom-field .v-label.v-label--active) {
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 
 /* Botón crear cuenta */
 .create-account-btn {
-  background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%) !important;
-  color: #000000 !important;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-secondary)) 100%) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
   font-weight: 600 !important;
   font-size: 0.95rem !important;
   text-transform: none !important;
@@ -407,14 +404,14 @@ const goBack = () => {
 }
 
 .create-account-btn:hover {
-  background: linear-gradient(135deg, #B8941F 0%, #9A7A1A 100%) !important;
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4) !important;
+  background: linear-gradient(135deg, rgb(var(--v-theme-secondary)) 0%, rgb(var(--v-theme-primary)) 100%) !important;
+  box-shadow: 0 6px 16px rgba(203, 156, 2, 0.4) !important;
   transform: translateY(-1px);
 }
 
 .create-account-btn:disabled {
   background: rgba(75, 85, 99, 0.5) !important;
-  color: rgba(156, 163, 175, 0.8) !important;
+  color: rgba(190, 197, 211, 0.8) !important;
   box-shadow: none !important;
   transform: none;
 }
@@ -425,12 +422,12 @@ const goBack = () => {
 }
 
 .login-text {
-  color: rgba(156, 163, 175, 0.9) !important;
+  color: rgba(var(--v-theme-on-surface), 0.7) !important;
   font-size: 0.9rem !important;
 }
 
 .login-btn {
-  color: #D4AF37 !important;
+  color: rgb(var(--v-theme-primary)) !important;
   /* font-size: 0.9rem !important;
   font-weight: 600 !important; */
   text-transform: none !important;
@@ -441,7 +438,7 @@ const goBack = () => {
 }
 
 .login-btn:hover {
-  color: #B8941F !important;
+  color: rgb(var(--v-theme-secondary)) !important;
   text-decoration: underline !important;
   background: transparent !important;
 }
@@ -478,4 +475,5 @@ const goBack = () => {
     padding: 20px !important;
   }
 }
+
 </style>

@@ -17,39 +17,40 @@ import '@mdi/font/css/materialdesignicons.css'
 const vuetify = createVuetify({
   components,
   directives,
-  // Personalizacion de paleta de colores segun nuestro prototipo
+  // Personalización de paleta de colores basada en los estilos de RegisterView.vue (modo oscuro con dorados)
   theme: {
-    defaultTheme: 'light',
+    defaultTheme: 'dark',
+    variations: false,
     themes: {
       dark: {
         dark: true,
-        colors: {
-          primary: '#00CED1',
-          secondary: '#1a237e',
-          accent: '#FFD700',
-          background: '#0D1117',
-          surface: '#1f2937',
-          'on-primary': '#000000',
-          'on-secondary': '#FFFFFF',
-          'on-accent': '#000000',
-          'on-surface': '#FFFFFF',
-          'on-background': '#FFFFFF'
-        }
+        colors: { // Paleta basada en RegisterView.vue
+          primary: '#D4AF37',      // Dorado principal para acentos
+          secondary: '#B8941F',    // Dorado secundario
+          accent: '#FFD700',       // Amarillo brillante para toques extra
+          background: '#000000',   // Fondo negro
+          surface: '#1a1a1a',      // Superficie para cards y campos
+          'on-primary': '#000000',   // Texto negro sobre primario
+          'on-secondary': '#FFFFFF', // Texto blanco sobre secundario
+          'on-accent': '#000000',    // Texto negro sobre acento
+          'on-surface': '#F9FAFB',   // Texto claro sobre superficies oscuras
+          'on-background': '#F9FAFB'// Texto claro sobre fondo oscuro
+        },
       },
       light: {
         dark: false,
         colors: {
-          primary: '#00CED1',
-          secondary: '#1a237e',
-          accent: '#FFD700',
-          background: '#FFFFFF',
-          surface: '#F5F5F5',
-          'on-primary': '#000000',
-          'on-secondary': '#FFFFFF',
-          'on-accent': '#000000',
-          'on-surface': '#000000',
-          'on-background': '#000000'
-        }
+          primary: '#B8941F',      // Dorado oscuro para contraste en claro
+          secondary: '#D4AF37',    // Dorado más claro
+          accent: '#E1A40C',       // Naranja/dorado para acentos
+          background: '#F5F5F5',   // Fondo gris muy claro
+          surface: '#FFFFFF',      // Superficie blanca para cards
+          'on-primary': '#FFFFFF',   // Texto blanco sobre primario
+          'on-secondary': '#000000', // Texto negro sobre secundario
+          'on-accent': '#000000',    // Texto negro sobre acento
+          'on-surface': '#000000',   // Texto negro sobre superficies claras
+          'on-background': '#000000'// Texto negro sobre fondo claro
+        },
       }
     }
   }
