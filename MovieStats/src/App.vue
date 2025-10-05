@@ -3,12 +3,8 @@
 </script>
 
 <template>
-  <!-- Principal container -->
   <v-app>
-      <v-container>
-        <!-- Renders different views from vue-router -->
-        <router-view />
-      </v-container>
+    <router-view />
   </v-app>
 </template>
 
