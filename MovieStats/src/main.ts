@@ -29,7 +29,7 @@ const vuetify = createVuetify({
         dark: true,
         colors: { // Paleta basada en RegisterView.vue
           primary: '#D4AF37',      // Dorado principal para acentos
-          secondary: '#B8941F',    // Dorado secundario
+          secondary: '#c59d1bff',    // Dorado secundario
           accent: '#FFD700',       // Amarillo brillante para toques extra
           background: '#000000',   // Fondo negro
           surface: '#1a1a1a',      // Superficie para cards y campos

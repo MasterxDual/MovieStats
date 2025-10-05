@@ -51,7 +51,7 @@
                   >
                     <!-- Nombre completo -->
                     <div class="mb-3">
-                      <label class="field-label">Nombre completo</label>
+                      <label class="field-label"><b>Nombre completo</b></label>
                       <v-text-field
                         v-model="formData.fullName"
                         placeholder="Tu nombre completo"
@@ -65,7 +65,7 @@
 
                     <!-- Correo electrónico -->
                     <div class="mb-3">
-                      <label class="field-label">Correo electrónico</label>
+                      <label class="field-label"><b>Correo electrónico</b></label>
                       <v-text-field
                         v-model="formData.email"
                         placeholder="tu@email.com"
@@ -80,7 +80,7 @@
 
                     <!-- Contraseña -->
                     <div class="mb-3">
-                      <label class="field-label">Contraseña</label>
+                      <label class="field-label"><b>Contraseña</b></label>
                       <v-text-field
                         v-model="formData.password"
                         placeholder="Tu contraseña"
@@ -97,7 +97,7 @@
 
                     <!-- Confirmar contraseña -->
                     <div class="mb-4">
-                      <label class="field-label">Confirmar contraseña</label>
+                      <label class="field-label"><b>Confirmar contraseña</b></label>
                       <v-text-field
                         v-model="formData.confirmPassword"
                         placeholder="Confirma tu contraseña"
@@ -318,7 +318,7 @@ const goBack = () => {
 .cinema-logo {
   font-size: 2rem !important;
   font-weight: 700 !important;
-  color: rgb(var(--v-theme-accent)) !important;
+  color: rgb(var(--v-theme-secondary)) !important;
   margin-bottom: 0 !important;
   letter-spacing: -0.5px;
 }
