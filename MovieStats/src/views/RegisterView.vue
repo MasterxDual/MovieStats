@@ -44,7 +44,7 @@
                   </p>
 
                   <!-- Formulario -->
-                  <v-form 
+                  <v-form
                     ref="formRef"
                     v-model="isFormValid"
                     @submit.prevent="handleRegister"
@@ -58,6 +58,20 @@
                         variant="outlined"
                         density="comfortable"
                         :rules="nameRules"
+                        hide-details="auto"
+                        class="custom-field"
+                      />
+                    </div>
+
+                    <!-- Apellido -->
+                    <div class="mb-3">
+                      <label class="field-label"><b>Apellido</b></label>
+                      <v-text-field
+                        v-model="formData.last_name"
+                        placeholder="Tu apellido"
+                        variant="outlined"
+                        density="comfortable"
+                        :rules="last_nameRules"
                         hide-details="auto"
                         class="custom-field"
                       />
@@ -164,13 +178,14 @@
     </v-main>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import type { VForm } from 'vuetify/components'
 const router = useRouter()
 
 // Referencias reactivas
-const formRef = ref(null)
+const formRef = ref<VForm | null>(null)
 const isFormValid = ref(false)
 const isLoading = ref(false)
 const showPassword = ref(false)
@@ -179,6 +194,7 @@ const showConfirmPassword = ref(false)
 // Datos del formulario
 const formData = ref({
   fullName: '',
+  last_name: '',
   email: '',
   password: '',
   confirmPassword: ''
@@ -192,25 +208,31 @@ const notification = ref({
 })
 
 // Reglas de validación
-const nameRules = [
-  v => !!v || 'El nombre es requerido',
-  v => (v && v.length >= 2) || 'El nombre debe tener al menos 2 caracteres',
-  v => (v && v.length <= 100) || 'El nombre es demasiado largo'
+const nameRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'El nombre es requerido',
+  (v: string) => (v && v.length >= 2) || 'El nombre debe tener al menos 2 caracteres',
+  (v: string) => (v && v.length <= 100) || 'El nombre es demasiado largo'
 ]
 
-const emailRules = [
-  v => !!v || 'El correo electrónico es requerido',
-  v => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
+const last_nameRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'El apellido es requerido',
+  (v: string) => (v && v.length >= 2) || 'El apellido debe tener al menos 2 caracteres',
+  (v: string) => (v && v.length <= 100) || 'El apellido es demasiado largo'
 ]
 
-const passwordRules = [
-  v => !!v || 'La contraseña es requerida',
-  v => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
+const emailRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'El correo electrónico es requerido',
+  (v: string) => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
 ]
 
-const confirmPasswordRules = [
-  v => !!v || 'Confirma tu contraseña',
-  v => v === formData.value.password || 'Las contraseñas no coinciden'
+const passwordRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'La contraseña es requerida',
+  (v: string) => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
+]
+
+const confirmPasswordRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'Confirma tu contraseña',
+  (v: string) => v === formData.value.password || 'Las contraseñas no coinciden'
 ]
 
 // Métodos
@@ -218,40 +240,49 @@ const handleRegister = async () => {
   if (!isFormValid.value) return
 
   isLoading.value = true
-  
+
   try {
-    // Simular llamada a API
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Datos para enviar al backend
     const userData = {
       name: formData.value.fullName,
+      last_name: formData.value.last_name,
       email: formData.value.email,
       password: formData.value.password
     }
-    
-    console.log('Datos de registro:', userData)
-    
-    // Mostrar mensaje de éxito
-    showNotification('¡Cuenta creada exitosamente! Bienvenido a CinemaApp', 'success')
-    
-    // Limpiar formulario
+
+    // Llamada real al backend
+    const response = await fetch('http://localhost:8080/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al crear la cuenta')
+    }
+
+    const data = await response.json()
+    console.log('Usuario registrado:', data)
+
+    showNotification('¡Cuenta creada exitosamente! Bienvenido a MovieStats', 'success')
     resetForm()
-    
-    // Opcional: redirigir al login después de un tiempo
+
+    // Redirigir al login después de 2 segundos
     setTimeout(() => {
       router.push('/login')
     }, 2000)
-    
+
   } catch (error) {
-    console.error('Error al crear cuenta:', error)
-    showNotification('Error al crear la cuenta. Inténtalo nuevamente.', 'error')
+    console.error('Error:', error)
+    showNotification((error as Error).message || 'Error al crear la cuenta. Inténtalo nuevamente.', 'error')
   } finally {
     isLoading.value = false
   }
 }
 
-const showNotification = (message, color = 'success') => {
+const showNotification = (message: string, color: string = 'success') => {
   notification.value = {
     show: true,
     message,
@@ -262,6 +293,7 @@ const showNotification = (message, color = 'success') => {
 const resetForm = () => {
   formData.value = {
     fullName: '',
+    last_name: '',
     email: '',
     password: '',
     confirmPassword: ''
