@@ -60,9 +60,7 @@
                     hide-details
                     rounded
                     class="filter-select"
-                    item-title="text"
-                    item-value="value"
-                    :return-object="false"
+                    clearable
                   >
                   </v-select>
                 </div>
@@ -121,9 +119,9 @@
                 <v-col cols="12" sm="6" md="4" lg="3" v-for="movie in movies" :key="movie.id">
                   <v-card class="movie-card" elevation="2" color="surface">
                     <v-img :src="movie.poster" height="300" cover />
-                    <v-card-title class="text-h6">{{ movie.title }}</v-card-title>
+                    <v-card-title class="text-h6 movie-title">{{ movie.title }}</v-card-title>
                     <v-card-subtitle>{{ movie.year }} · ★ {{ movie.rating }}</v-card-subtitle>
-                    <v-card-text class="text-body-2" style="min-height: 56px;">
+                    <v-card-text class="text-body-2 movie-overview">
                       {{ movie.overview }}
                     </v-card-text>
                   </v-card>
@@ -165,22 +163,6 @@ interface Movie {
 const router = useRouter()
 const vuetifyTheme = useTheme()
 
-// Mock ampliado con género para filtros
-const allMockMovies: Movie[] = [
-  { id: 1, title: 'Golden Dawn', year: 2021, rating: 7.8, poster: 'https://via.placeholder.com/400x600?text=Golden+Dawn', overview: 'Una aventura dorada.', genre: 'Aventura' },
-  { id: 2, title: 'Night of Stars', year: 2019, rating: 8.1, poster: 'https://via.placeholder.com/400x600?text=Night+of+Stars', overview: 'Un thriller espacial.', genre: 'Ciencia ficción' },
-  { id: 3, title: 'The Last Reel', year: 2020, rating: 7.0, poster: 'https://via.placeholder.com/400x600?text=The+Last+Reel', overview: 'Drama sobre cineastas.', genre: 'Drama' },
-  { id: 4, title: 'Echoes', year: 2018, rating: 6.9, poster: 'https://via.placeholder.com/400x600?text=Echoes', overview: 'Misterio psicológico.', genre: 'Misterio' },
-  { id: 5, title: 'Silver Lining', year: 2022, rating: 7.4, poster: 'https://via.placeholder.com/400x600?text=Silver+Lining', overview: 'Comedia dramática.', genre: 'Comedia' },
-  { id: 6, title: 'Hidden Gold', year: 2017, rating: 6.8, poster: 'https://via.placeholder.com/400x600?text=Hidden+Gold', overview: 'Aventura de búsqueda.', genre: 'Aventura' },
-  { id: 7, title: 'Moonlight Saga', year: 2015, rating: 8.5, poster: 'https://via.placeholder.com/400x600?text=Moonlight+Saga', overview: 'Epopeya de ciencia ficción.', genre: 'Ciencia ficción' },
-  { id: 8, title: 'Silent Echo', year: 2016, rating: 6.5, poster: 'https://via.placeholder.com/400x600?text=Silent+Echo', overview: 'Suspenso minimalista.', genre: 'Suspenso' },
-  { id: 9, title: 'Amber Road', year: 2023, rating: 7.9, poster: 'https://via.placeholder.com/400x600?text=Amber+Road', overview: 'Road movie.', genre: 'Drama' },
-  { id: 10, title: 'The Gold Standard', year: 2024, rating: 8.2, poster: 'https://via.placeholder.com/400x600?text=The+Gold+Standard', overview: 'Comedia satírica.', genre: 'Comedia' },
-  { id: 11, title: 'Hidden Stars', year: 2020, rating: 7.1, poster: 'https://via.placeholder.com/400x600?text=Hidden+Stars', overview: 'Historia íntima.', genre: 'Drama' },
-  { id: 12, title: 'Deep Horizon', year: 2014, rating: 6.7, poster: 'https://via.placeholder.com/400x600?text=Deep+Horizon', overview: 'Aventura submarina.', genre: 'Aventura' }
-]
-
 // Estado
 const movies = ref<Movie[]>([])
 const total = ref<number>(0)
@@ -197,61 +179,127 @@ const minRating = ref<number>(0)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-// obtener listas para selects
-const genres = computed(() => {
-  const set = new Set<string>()
-  set.add('Todos')
-  allMockMovies.forEach(m => m.genre && set.add(m.genre))
-  return Array.from(set)
-})
+// Listas para los filtros (TODO: obtener del backend)
+const genres = computed(() => [
+  'Todos',
+  'Acción',
+  'Aventura',
+  'Ciencia ficción',
+  'Comedia',
+  'Drama',
+  'Misterio',
+  'Suspenso',
+  'Terror'
+])
+
 const years = computed(() => {
-  const set = new Set<number | string>()
-  set.add('Todos')
-  allMockMovies.forEach(m => set.add(m.year))
-  return Array.from(set).sort((a, b) => (b as number) - (a as number))
+  const currentYear = new Date().getFullYear()
+  const yearsList: (string | number)[] = ['Todos']
+  for (let year = currentYear; year >= 1900; year--) {
+    yearsList.push(year)
+  }
+  return yearsList
 })
 
-// Simula fetch al backend (acepta filtros)
-function fetchMoviesFromServerMock(q: string, p: number, ps: number, genre: string, year: string | number, minR: number): Promise<{ data: Movie[], total: number }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const lowerQ = q.trim().toLowerCase()
-      let filtered = allMockMovies.slice()
-      if (lowerQ) {
-        filtered = filtered.filter(m => m.title.toLowerCase().includes(lowerQ))
-      }
-      if (genre && genre !== 'Todos') {
-        filtered = filtered.filter(m => m.genre === genre)
-      }
-      if (year && year !== 'Todos') {
-        filtered = filtered.filter(m => m.year === Number(year))
-      }
-      if (minR && minR > 0) {
-        filtered = filtered.filter(m => m.rating >= minR)
-      }
-      const start = (p - 1) * ps
-      const end = start + ps
-      const pageItems = filtered.slice(start, end)
-      resolve({ data: pageItems, total: filtered.length })
-    }, 420)
-  })
+// DTO que devuelve el backend
+interface PeliculaDTO {
+  id: number
+  title: string
+  year: number
+  rating: number
+  poster?: string | null
+  overview?: string | null
+  genres?: string[] | null
 }
 
+// Consulta simple al backend con paginación
+async function fetchMoviesFromServer(
+  page: number,
+  size: number,
+  q: string,
+  genre: string,
+  year: string | number,
+  minR: number
+) {
+  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+
+  // Construir parámetros de consulta
+  const params = new URLSearchParams()
+  params.append('page', String(page))
+  params.append('size', String(size))
+
+  // Parámetros opcionales (filtros)
+  if (q && String(q).trim().length) params.append('q', String(q).trim())
+  if (genre && genre !== 'Todos') params.append('genre', genre)
+  if (year && year !== 'Todos') params.append('year', String(year))
+  if (minR && minR > 0) params.append('minRating', String(minR))
+
+  const url = `${apiBase}/api/v1/pelicula?${params.toString()}`
+
+  console.log('🎬 Fetching movies from:', url)
+
+  const response = await fetch(url, {
+    headers: { 'Accept': 'application/json' }
+  })
+
+  if (!response.ok) {
+    console.error('❌ Error response:', response.status, response.statusText)
+    throw new Error(`Error al obtener películas: ${response.status}`)
+  }
+
+  const json = await response.json()
+  console.log('✅ Response data:', json)
+
+  // Mapear el DTO del backend a nuestro modelo Movie
+  const movies: Movie[] = (json.data ?? []).map((dto: PeliculaDTO) => ({
+    id: dto.id,
+    title: dto.title,
+    year: dto.year,
+    rating: dto.rating,
+    poster: dto.poster ?? '',
+    overview: dto.overview ?? '',
+    genre: dto.genres?.[0] ?? undefined
+  }))
+
+  console.log(`📊 Mapped ${movies.length} movies, total: ${json.total}`)
+
+  return {
+    data: movies,
+    total: json.total ?? 0
+  }
+}
+
+// Cargar películas con paginación y filtros
 async function loadMovies(reset = false) {
   if (reset) {
     page.value = 1
     movies.value = []
   }
+
   loading.value = true
-  const currentPage = page.value
+
   try {
-    const res = await fetchMoviesFromServerMock(query.value, currentPage, pageSize.value, selectedGenre.value, selectedYear.value, minRating.value)
-    total.value = res.total
-    if (currentPage === 1) {
-      movies.value = res.data
+    // ENVÍAR LOS FILTROS
+    const result = await fetchMoviesFromServer(
+      page.value,
+      pageSize.value,
+      query.value,           // ← búsqueda por texto
+      selectedGenre.value,   // ← filtro género
+      selectedYear.value,    // ← filtro año
+      minRating.value        // ← filtro puntuación
+    )
+
+    total.value = result.total
+
+    if (page.value === 1) {
+      movies.value = result.data
     } else {
-      movies.value = [...movies.value, ...res.data]
+      movies.value = [...movies.value, ...result.data]
     }
+  } catch (error) {
+    console.error('Error cargando películas:', error)
+    movies.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -450,10 +498,38 @@ onMounted(() => {
   border-radius: 12px;
   overflow: hidden;
   transition: transform 120ms ease, box-shadow 120ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 .movie-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+/* Limitar el título a 2 líneas */
+.movie-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  max-height: 2.6em; /* 2 líneas */
+}
+
+/* Limitar la descripción a 3 líneas */
+.movie-overview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+  min-height: 4.5em; /* 3 líneas */
+  max-height: 4.5em;
 }
 
 /* filtros: estilo similar a la foto */
