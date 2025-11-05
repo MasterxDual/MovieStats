@@ -1,9 +1,9 @@
-
 import App from './App.vue'
 import router from './router'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { ref } from 'vue'
 
 // Vuetify
 import 'vuetify/styles'
@@ -69,5 +69,33 @@ app.use(createPinia())
 app.use(router)
 
 app.provide('vuetify', vuetify)
+
+// exportar helper para controlar el tema desde componentes
+export const appTheme = ref<'light' | 'dark' | 'system'>('system')
+
+type VuetifyWithTheme = {
+  theme?: {
+    global?: {
+      name?: {
+        value: 'light' | 'dark' | 'system'
+      }
+    }
+  }
+}
+
+export function setAppTheme(name: 'light' | 'dark' | 'system') {
+  appTheme.value = name
+  // Intentar actualizar el theme API de Vuetify si está disponible (tipado seguro)
+  try {
+    const v = vuetify as unknown as VuetifyWithTheme
+    if (v.theme?.global?.name) {
+      v.theme.global.name.value = name
+    }
+  } catch {
+    // no hacer nada si falla
+  }
+  // También sincronizamos un atributo en el DOM para estilos custom si los usas
+  document.documentElement.setAttribute('data-theme', name)
+}
 
 app.mount('#app')

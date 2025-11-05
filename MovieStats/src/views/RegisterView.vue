@@ -175,7 +175,51 @@
           </v-btn>
         </template>
       </v-snackbar>
+
+      <!-- Diálogo de verificación de correo -->
+      <v-dialog v-model="showVerificationDialog" persistent max-width="400">
+        <v-card>
+          <v-card-title class="text-center">Verificar Correo Electrónico</v-card-title>
+          <v-card-text class="pa-6">
+            <p class="text-center mb-4">
+              Hemos enviado un código de verificación de 6 dígitos a <strong>{{ formData.email }}</strong>.
+              Ingresa el código para continuar con el registro.
+            </p>
+            <v-text-field
+              v-model="verificationCode"
+              label="Código de verificación"
+              type="number"
+              maxlength="6"
+              variant="outlined"
+              density="comfortable"
+              :rules="codeRules"
+              hide-details="auto"
+              class="custom-field text-center"
+              placeholder="000000"
+            />
+          </v-card-text>
+          <v-card-actions class="pa-6 pt-0">
+            <v-spacer></v-spacer>
+            <v-btn
+              variant="text"
+              @click="cancelVerification"
+              :disabled="isVerifying"
+            >
+              Cancelar
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="verifyCode"
+              :loading="isVerifying"
+              :disabled="!verificationCode || verificationCode.length !== 6"
+            >
+              Verificar y Registrar
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-main>
+
 </template>
 
 <script setup lang="ts">
@@ -190,6 +234,10 @@ const isFormValid = ref(false)
 const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+const showVerificationDialog = ref(false)
+const verificationCode = ref('')
+const isVerifying = ref(false)
+const generatedCode = ref('')
 
 // Datos del formulario
 const formData = ref({
@@ -235,11 +283,58 @@ const confirmPasswordRules: ((v: string) => string | boolean)[] = [
   (v: string) => v === formData.value.password || 'Las contraseñas no coinciden'
 ]
 
+const codeRules: ((v: string) => string | boolean)[] = [
+  (v: string) => !!v || 'El código es requerido',
+  (v: string) => /^\d{6}$/.test(v) || 'El código debe ser de 6 dígitos numéricos'
+]
+
 // Métodos
 const handleRegister = async () => {
   if (!isFormValid.value) return
 
   isLoading.value = true
+
+  try {
+    // Generar código de verificación
+    generatedCode.value = Math.floor(100000 + Math.random() * 900000).toString()
+
+    // Simular envío de código por email (por ahora)
+    console.log(`Código de verificación generado: ${generatedCode.value} para ${formData.value.email}`)
+
+    // Aquí iría la llamada al backend cuando esté implementado:
+    // const emailResponse = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     email: formData.value.email,
+    //     code: generatedCode.value
+    //   })
+    // })
+
+    // Simular respuesta exitosa
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Simular delay de red
+
+    // Mostrar diálogo de verificación
+    showVerificationDialog.value = true
+    showNotification('Código de verificación enviado a tu correo', 'success')
+
+  } catch (error) {
+    console.error('Error:', error)
+    showNotification((error as Error).message || 'Error al enviar el código. Inténtalo nuevamente.', 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const verifyCode = async () => {
+  if (verificationCode.value !== generatedCode.value) {
+    showNotification('Código incorrecto. Inténtalo nuevamente.', 'error')
+    return
+  }
+
+  isVerifying.value = true
 
   try {
     const userData = {
@@ -249,7 +344,7 @@ const handleRegister = async () => {
       password: formData.value.password
     }
 
-    // Llamada real al backend
+    // Llamada real al backend para registrar
     const response = await fetch('http://localhost:8080/api/auth/register', {
       method: 'POST',
       headers: {
@@ -266,6 +361,7 @@ const handleRegister = async () => {
     const data = await response.json()
     console.log('Usuario registrado:', data)
 
+    showVerificationDialog.value = false
     showNotification('¡Cuenta creada exitosamente! Bienvenido a MovieStats', 'success')
     resetForm()
 
@@ -278,8 +374,14 @@ const handleRegister = async () => {
     console.error('Error:', error)
     showNotification((error as Error).message || 'Error al crear la cuenta. Inténtalo nuevamente.', 'error')
   } finally {
-    isLoading.value = false
+    isVerifying.value = false
   }
+}
+
+const cancelVerification = () => {
+  showVerificationDialog.value = false
+  verificationCode.value = ''
+  generatedCode.value = ''
 }
 
 const showNotification = (message: string, color: string = 'success') => {
@@ -298,6 +400,8 @@ const resetForm = () => {
     password: '',
     confirmPassword: ''
   }
+  verificationCode.value = ''
+  generatedCode.value = ''
   formRef.value?.resetValidation()
 }
 
@@ -489,6 +593,11 @@ const goBack = () => {
 .register-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Diálogo de verificación */
+:deep(.v-dialog) {
+  backdrop-filter: blur(4px);
 }
 
 /* Responsive */
