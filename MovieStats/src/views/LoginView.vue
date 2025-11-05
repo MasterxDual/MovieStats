@@ -47,7 +47,7 @@
                   <v-form 
                     ref="formRef"
                     v-model="isFormValid"
-                    @submit.prevent="handleRegister"
+                    @submit.prevent="handleLogin"
                   >
                     <!-- Correo electrónico -->
                     <div class="mb-3">
@@ -81,7 +81,7 @@
                       />
                     </div>
 
-                    <!-- Botón crear cuenta -->
+                    <!-- Botón iniciar sesión -->
                     <v-btn
                       type="submit"
                       block
@@ -134,77 +134,107 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  const router = useRouter()
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
-  // Referencias reactivas
-  const formRef = ref(null)
-  const isFormValid = ref(false)
-  const isLoading = ref(false)
-  const showPassword = ref(false)
+// Referencias reactivas
+const formRef = ref(null)
+const isFormValid = ref(false)
+const isLoading = ref(false)
+const showPassword = ref(false)
 
-  // Datos del formulario
-  const formData = ref({
-    fullName: '',
-    email: '',
-    password: ''
-  })
+// Datos del formulario (solo email + password para login)
+const formData = ref({
+  email: '',
+  password: ''
+})
 
-  // Sistema de notificaciones
-  const notification = ref({
-    show: false,
-    message: '',
-    color: 'success'
-  })
+// Sistema de notificaciones
+const notification = ref({
+  show: false,
+  message: '',
+  color: 'success'
+})
 
-  const emailRules = [
-    v => !!v || 'El correo electrónico es requerido',
-    v => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
-  ]
+const emailRules = [
+  v => !!v || 'El correo electrónico es requerido',
+  v => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
+]
 
-  const passwordRules = [
-    v => !!v || 'La contraseña es requerida',
-    v => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
-  ]
+const passwordRules = [
+  v => !!v || 'La contraseña es requerida',
+  v => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
+]
 
-  // Métodos
-  const handleRegister = async () => {
-    if (!isFormValid.value) return
+/**
+ * handleLogin:
+ * - Llama al endpoint del backend /api/auth/login
+ * - Envía { correo, contrasenia } (nombres requeridos por el DTO del backend)
+ * - Almacena el token JWT en localStorage bajo la key "token" si la autenticación es exitosa
+ * - Muestra notificaciones de error cuando corresponda
+ */
+const handleLogin = async () => {
+  if (!isFormValid.value) return
 
-    isLoading.value = true
-    
-    try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+  isLoading.value = true
 
-      // Datos para enviar al backend
-      const userData = {
-        name: formData.value.fullName,
-        email: formData.value.email,
-        password: formData.value.password
-      }
-
-      console.log('Datos de registro:', userData)
-
-      // Mostrar mensaje de éxito
-      showNotification('Esto llevará al catálogo de películas a futuro', 'success')
-
-      // Limpiar formulario
-      resetForm()
-
-      // Opcional: redirigir al login después de un tiempo
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
-
-    } catch (error) {
-      console.error('Error al crear cuenta:', error)
-      showNotification('Error al crear la cuenta. Inténtalo nuevamente.', 'error')
-    } finally {
-      isLoading.value = false
+  try {
+    const payload = {
+      correo: formData.value.email,
+      contrasenia: formData.value.password
     }
+
+    const response = await fetch('http://localhost:8080/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+
+    // Si la respuesta es OK (200) normalmente devuelve { token: "..." }
+    if (response.ok) {
+      const data = await response.json().catch(async () => {
+        // fallback si no se puede parsear como json
+        const txt = await response.text()
+        try { return JSON.parse(txt) } catch (_) { return { token: null } }
+      })
+
+      const token = data?.token || null
+      if (token) {
+        // Guardar token para uso en llamadas posteriores
+        localStorage.setItem('token', token)
+
+        showNotification('Inicio de sesión exitoso', 'success')
+
+        // Redirigir al catálogo o página principal
+        setTimeout(() => {
+          router.push('/index')
+        }, 700)
+      } else {
+        // Respuesta OK pero sin token (raro)
+        showNotification('Respuesta inválida del servidor', 'error')
+      }
+    } else {
+      // Manejar errores: backend suele devolver JSON con { error: "mensaje" } o una cadena
+      const text = await response.text()
+      let parsed = null
+      try {
+        parsed = JSON.parse(text)
+      } catch (e) {
+        parsed = null
+      }
+      const errMsg = (parsed && (parsed.error || parsed.message)) || text || 'Error al autenticar'
+      showNotification(errMsg.replace(/["{}]/g, ''), 'error')
+    }
+  } catch (error) {
+    console.error('Error en login:', error)
+    showNotification('No se pudo conectar con el servidor', 'error')
+  } finally {
+    isLoading.value = false
   }
+}
 
 const showNotification = (message, color = 'success') => {
   notification.value = {
@@ -212,16 +242,6 @@ const showNotification = (message, color = 'success') => {
     message,
     color
   }
-}
-
-const resetForm = () => {
-  formData.value = {
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  }
-  formRef.value?.resetValidation()
 }
 
 const goToRegister = () => {
