@@ -11,11 +11,11 @@ const routes = [
     name: 'Register',
     component: () => import('../views/RegisterView.vue')
   },
-  // Ruta de detalle opcional (placeholder)
+  // Ruta de detalle de película
   {
     path: '/movie/:id',
-    name: 'MovieDetails',
-    component: () => import('../views/RegisterView.vue') // cambiar por MovieDetails cuando exista
+    name: 'MovieDetail',
+    component: () => import('../views/MovieDetailView.vue')
   },
   // Redirigir cualquier ruta desconocida a la página principal
   {

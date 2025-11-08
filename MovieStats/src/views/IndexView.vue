@@ -117,7 +117,13 @@
 
               <template v-else>
                 <v-col cols="12" sm="6" md="4" lg="3" v-for="movie in movies" :key="movie.id">
-                  <v-card class="movie-card" elevation="2" color="surface">
+                  <v-card
+                    class="movie-card"
+                    elevation="2"
+                    color="surface"
+                    @click="goToMovieDetail(movie.id)"
+                    style="cursor: pointer;"
+                  >
                     <v-img :src="movie.poster" height="300" cover />
                     <v-card-title class="text-h6 movie-title">{{ movie.title }}</v-card-title>
                     <v-card-subtitle>{{ movie.year }} · ★ {{ movie.rating }}</v-card-subtitle>
@@ -336,6 +342,10 @@ function toggleTheme() {
     vuetifyTheme.global.name.value = next
   }
   document.documentElement.setAttribute('data-theme', next)
+}
+
+function goToMovieDetail(movieId: number) {
+  router.push({ name: 'MovieDetail', params: { id: movieId } })
 }
 
 // Debounce búsqueda (se envía al "backend" por paginación)
