@@ -44,7 +44,7 @@
                   </p>
 
                   <!-- Formulario -->
-                  <v-form 
+                  <v-form
                     ref="formRef"
                     v-model="isFormValid"
                     @submit.prevent="handleLogin"
@@ -133,7 +133,7 @@
     </v-main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -158,13 +158,13 @@ const notification = ref({
 })
 
 const emailRules = [
-  v => !!v || 'El correo electrónico es requerido',
-  v => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
+  (v: string) => !!v || 'El correo electrónico es requerido',
+  (v: string) => /.+@.+\..+/.test(v) || 'Ingresa un correo electrónico válido'
 ]
 
 const passwordRules = [
-  v => !!v || 'La contraseña es requerida',
-  v => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
+  (v: string) => !!v || 'La contraseña es requerida',
+  (v: string) => (v && v.length >= 6) || 'La contraseña debe tener al menos 6 caracteres'
 ]
 
 /**
@@ -198,13 +198,43 @@ const handleLogin = async () => {
       const data = await response.json().catch(async () => {
         // fallback si no se puede parsear como json
         const txt = await response.text()
-        try { return JSON.parse(txt) } catch (_) { return { token: null } }
+        try { return JSON.parse(txt) } catch { return { token: null } }
       })
 
+      console.log('✅ Login response data:', data)
+      console.log('📋 Data structure:', {
+        hasToken: !!data?.token,
+        hasIdUsuario: !!data?.idUsuario,
+        keys: Object.keys(data || {})
+      })
+
+      // El backend devuelve: { token: string, idUsuario: number }
+      // PERO si solo viene el token, extraemos el idUsuario del JWT
       const token = data?.token || null
-      if (token) {
+      let idUsuario = data?.idUsuario || null
+
+      // Si no viene idUsuario en la respuesta, intentar extraerlo del token JWT
+      if (token && !idUsuario) {
+        try {
+          // Decodificar el payload del JWT (segunda parte entre los puntos)
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          console.log('📦 JWT Payload:', payload)
+
+          // Buscar el ID en el payload del token
+          idUsuario = payload.idUsuario || payload.id || payload.userId || null
+
+          console.log('🔍 ID Usuario extraído del token:', idUsuario)
+        } catch (e) {
+          console.error('❌ Error al decodificar JWT:', e)
+        }
+      }
+
+      if (token && idUsuario) {
         // Guardar token para uso en llamadas posteriores
         localStorage.setItem('token', token)
+        localStorage.setItem('idUser', idUsuario.toString())
+
+        console.log('✅ Token y usuario guardados en localStorage')
 
         showNotification('Inicio de sesión exitoso', 'success')
 
@@ -214,29 +244,35 @@ const handleLogin = async () => {
         }, 700)
       } else {
         // Respuesta OK pero sin token (raro)
-        showNotification('Respuesta inválida del servidor', 'error')
+        console.error('❌ Respuesta sin token o idUsuario:', data)
+        showNotification('No se pudo obtener las credenciales. Contacta al administrador.', 'error')
       }
     } else {
-      // Manejar errores: backend suele devolver JSON con { error: "mensaje" } o una cadena
+      // Manejar errores: backend devuelve JSON con { error: "mensaje" } o string JSON
       const text = await response.text()
       let parsed = null
+      let errorMessage = 'Error al autenticar'
+
       try {
         parsed = JSON.parse(text)
-      } catch (e) {
-        parsed = null
+        errorMessage = parsed.error || parsed.message || text
+      } catch {
+        // Si no se puede parsear como JSON, usar el texto directamente
+        errorMessage = text || errorMessage
       }
-      const errMsg = (parsed && (parsed.error || parsed.message)) || text || 'Error al autenticar'
-      showNotification(errMsg.replace(/["{}]/g, ''), 'error')
+
+      console.error('❌ Error en login:', errorMessage)
+      showNotification(errorMessage.replace(/["{}\\]/g, ''), 'error')
     }
   } catch (error) {
-    console.error('Error en login:', error)
+    console.error('❌ Error de conexión en login:', error)
     showNotification('No se pudo conectar con el servidor', 'error')
   } finally {
     isLoading.value = false
   }
 }
 
-const showNotification = (message, color = 'success') => {
+const showNotification = (message: string, color = 'success') => {
   notification.value = {
     show: true,
     message,

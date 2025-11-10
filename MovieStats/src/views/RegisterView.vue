@@ -259,12 +259,23 @@ const handleRegister = async () => {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al crear la cuenta')
+      // Intentar parsear la respuesta de error
+      let errorMessage = 'Error al crear la cuenta'
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorData.message || errorMessage
+      } catch {
+        // Si no se puede parsear, usar mensaje genérico
+        errorMessage = `Error ${response.status}: ${response.statusText}`
+      }
+
+      console.error('❌ Error en registro:', errorMessage)
+      showNotification(errorMessage, 'error')
+      return // Salir de la función sin continuar
     }
 
     const data = await response.json()
-    console.log('Usuario registrado:', data)
+    console.log('✅ Usuario registrado:', data)
 
     showNotification('¡Cuenta creada exitosamente! Bienvenido a MovieStats', 'success')
     resetForm()
@@ -275,8 +286,8 @@ const handleRegister = async () => {
     }, 2000)
 
   } catch (error) {
-    console.error('Error:', error)
-    showNotification((error as Error).message || 'Error al crear la cuenta. Inténtalo nuevamente.', 'error')
+    console.error('❌ Error de conexión en registro:', error)
+    showNotification('No se pudo conectar con el servidor. Verifica tu conexión.', 'error')
   } finally {
     isLoading.value = false
   }

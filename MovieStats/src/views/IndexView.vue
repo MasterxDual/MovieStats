@@ -31,7 +31,35 @@
               <v-icon>mdi-theme-light-dark</v-icon>
             </v-btn>
 
-            <v-btn class="login-btn" @click="onLogin">Iniciar Sesión</v-btn>
+            <!-- Botón de login o menú de usuario -->
+            <v-btn
+              v-if="!isLoggedIn"
+              class="login-btn"
+              @click="onLogin"
+            >
+              Iniciar Sesión
+            </v-btn>
+
+            <v-menu v-else>
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  icon
+                  v-bind="props"
+                  class="btn-icon me-3"
+                  size="large"
+                >
+                  <v-icon>mdi-account-circle</v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item @click="handleLogout">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-logout</v-icon>
+                  </template>
+                  <v-list-item-title>Cerrar sesión</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
 
             <v-btn class="admin-btn" @click="onAdmin">
               <v-icon class="admin-icon" left>mdi-cog</v-icon>
@@ -150,11 +178,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 
-// Tipado de la entidad película
+const router = useRouter()
+const vuetifyTheme = useTheme()
+
+// Interface
 interface Movie {
   id: number
   title: string
@@ -166,9 +197,6 @@ interface Movie {
   fav?: boolean
 }
 
-const router = useRouter()
-const vuetifyTheme = useTheme()
-
 // Estado
 const movies = ref<Movie[]>([])
 const total = ref<number>(0)
@@ -176,6 +204,13 @@ const page = ref<number>(1)
 const pageSize = ref<number>(8)
 const query = ref<string>('')
 const loading = ref<boolean>(false)
+
+// Computed para verificar si el usuario está autenticado
+const isLoggedIn = computed(() => {
+  const token = localStorage.getItem('token')
+  const userId = localStorage.getItem('idUser')
+  return !!(token && userId)
+})
 
 
 // filtros
@@ -329,8 +364,9 @@ function applyFilters() {
 }
 
 function onLogin() {
-  router.push({ name: 'Register' }).catch(() => {})
+  router.push({ name: 'Login' }).catch(() => {})
 }
+
 function onAdmin() {
   alert('Administración (ruta no implementada)')
 }
@@ -344,8 +380,21 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next)
 }
 
+function handleLogout() {
+  // Limpiar el localStorage
+  localStorage.removeItem('token')
+  localStorage.removeItem('idUser')
+
+  // Recargar la página para actualizar el estado de autenticación
+  window.location.reload()
+}
+
 function goToMovieDetail(movieId: number) {
   router.push({ name: 'MovieDetail', params: { id: movieId } })
+
+  /* Asi se puede obtener el usuario en cualquier parte con localstorage */
+  // localStorage.getItem('idUser')
+
 }
 
 // Debounce búsqueda (se envía al "backend" por paginación)

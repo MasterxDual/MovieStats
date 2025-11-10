@@ -1,19 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router';
 // import HomeView from '@/views/HomeView.vue';
-import LoginView from '@/views/LoginView.vue';
-import RegisterView from '@/views/RegisterView.vue';
+// import LoginView from '@/views/LoginView.vue';
+// import RegisterView from '@/views/RegisterView.vue';
+// import path from 'path';
 
-const routes = [
-  // Route '/' will be the catalog view in the future
-  // { path: '/', component: LoginView, meta: { requiresAuth: true } },
-  // { path: '/products', component: ProductsView, meta: { requiresAuth: true } },
-  // { path: '/products/:id', component: ProductDetailView, meta: { requiresAuth: true } },
-  // { path: '/clients', component: ClientsView, meta: { requiresAuth: true } },
-  // { path: '/cart', component: CartView, meta: { requiresAuth: true } },
-  { path: '/', redirect: '/register' },
-  { path: '/login', component: LoginView },
-  { path:'/register', name: 'Register', component: RegisterView }
-];
+// const routes = [
+//   // Route '/' will be the catalog view in the future
+//   // { path: '/', component: LoginView, meta: { requiresAuth: true } },
+//   // { path: '/products', component: ProductsView, meta: { requiresAuth: true } },
+//   // { path: '/products/:id', component: ProductDetailView, meta: { requiresAuth: true } },
+//   // { path: '/clients', component: ClientsView, meta: { requiresAuth: true } },
+//   // { path: '/cart', component: CartView, meta: { requiresAuth: true } },
+//   { path: '/', redirect: '/register' },
+//   { path: '/login', component: LoginView },
+//   { path:'/register', name: 'Register', component: RegisterView }
+// ];
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: () => import('../views/RegisterView.vue')
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/LoginView.vue')
   },
   // Ruta de detalle de película
   {

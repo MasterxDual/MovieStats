@@ -14,6 +14,36 @@
           </v-col>
           <v-spacer />
           <v-col cols="auto">
+            <v-btn
+              v-if="!isLoggedIn"
+              variant="text"
+              color="primary"
+              @click="goToLogin"
+              class="btn-icon"
+            >
+              Iniciar sesión
+            </v-btn>
+            <v-menu v-else>
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  icon
+                  v-bind="props"
+                  class="btn-icon"
+                >
+                  <v-icon>mdi-account-circle</v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item @click="handleLogout">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-logout</v-icon>
+                  </template>
+                  <v-list-item-title>Cerrar sesión</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </v-col>
+          <v-col cols="auto">
             <v-btn icon class="btn-icon" title="Cambiar tema" @click="toggleTheme">
               <v-icon>mdi-theme-light-dark</v-icon>
             </v-btn>
@@ -155,6 +185,24 @@
                 <h2 class="section-title">Califica esta película</h2>
                 <p class="rating-subtitle">Tu calificación:</p>
 
+                <!-- Mensaje para usuarios no autenticados -->
+                <v-alert
+                  v-if="!isLoggedIn"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-4"
+                >
+                  <template v-slot:prepend>
+                    <v-icon>mdi-information</v-icon>
+                  </template>
+                  <span>
+                    Debes
+                    <a @click="goToLogin" class="login-link-text">iniciar sesión</a>
+                    para calificar esta película
+                  </span>
+                </v-alert>
+
                 <div class="star-rating">
                   <v-btn
                     v-for="star in 10"
@@ -164,6 +212,7 @@
                     variant="text"
                     @click="setUserRating(star)"
                     class="star-btn"
+                    :disabled="!isLoggedIn"
                   >
                     <v-icon
                       :color="star <= userRating ? 'primary' : 'grey'"
@@ -173,7 +222,9 @@
                     </v-icon>
                   </v-btn>
                 </div>
-                <p class="rating-hint">Haz clic en las estrellas para calificar</p>
+                <p class="rating-hint">
+                  {{ isLoggedIn ? 'Haz clic en las estrellas para calificar' : 'Inicia sesión para calificar' }}
+                </p>
 
                 <!-- Average Rating -->
                 <div class="average-rating-section">
@@ -207,11 +258,30 @@
         </v-btn>
       </v-container>
     </v-main>
+
+    <!-- Snackbar para notificaciones -->
+    <v-snackbar
+      v-model="notification.show"
+      :color="notification.color"
+      location="top"
+      timeout="4000"
+    >
+      {{ notification.message }}
+      <template v-slot:actions>
+        <v-btn
+          color="white"
+          variant="text"
+          @click="notification.show = false"
+        >
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
 
@@ -245,6 +315,21 @@ const movie = ref<MovieDetail | null>(null)
 const loading = ref<boolean>(true)
 const error = ref<string>('')
 const userRating = ref<number>(0)
+const isSubmittingRating = ref<boolean>(false)
+
+// Sistema de notificaciones
+const notification = ref({
+  show: false,
+  message: '',
+  color: 'success'
+})
+
+// Computed para verificar si el usuario está autenticado
+const isLoggedIn = computed(() => {
+  const token = localStorage.getItem('token')
+  const userId = localStorage.getItem('idUser')
+  return !!(token && userId)
+})
 
 // Fetch movie details
 async function fetchMovieDetail(movieId: number) {
@@ -295,6 +380,11 @@ async function fetchMovieDetail(movieId: number) {
     }
 
     console.log('✅ Mapped movie data:', movie.value)
+
+    // Si el usuario está autenticado, cargar su voto previo
+    if (isLoggedIn.value) {
+      await loadUserRating(movieId)
+    }
   } catch (err) {
     console.error('❌ Error fetching movie detail:', err)
 
@@ -338,10 +428,236 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next)
 }
 
-function setUserRating(rating: number) {
+// Cargar el voto previo del usuario
+async function loadUserRating(movieId: number) {
+  try {
+    const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('idUser')
+
+    if (!token || !userId) {
+      return
+    }
+
+    const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+    const url = `${apiBase}/api/v1/voto/id-pelicula/${movieId}/id-usuario/${userId}`
+
+    console.log('🔍 Cargando voto previo del usuario:', { movieId, userId, url })
+
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    console.log('📥 Respuesta del servidor (GET voto):', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('✅ Voto previo encontrado:', data)
+
+      // El backend puede devolver el voto directamente o dentro de un objeto
+      const puntuacion = data.puntuacion || data.voto?.puntuacion || null
+
+      if (puntuacion !== null && puntuacion !== undefined) {
+        userRating.value = puntuacion
+        console.log('⭐ Voto del usuario cargado:', userRating.value)
+      }
+    } else if (response.status === 404) {
+      console.log('ℹ️ Usuario no ha votado esta película aún')
+      userRating.value = 0
+    } else {
+      console.warn('⚠️ Respuesta inesperada al cargar voto:', response.status)
+      userRating.value = 0
+    }
+  } catch (err) {
+    console.error('⚠️ Error al cargar voto previo:', err)
+    userRating.value = 0
+    // No mostrar error al usuario, es opcional
+  }
+}
+
+async function setUserRating(rating: number) {
+  // Verificar si el usuario está autenticado
+  if (!isLoggedIn.value) {
+    showNotification('Debes iniciar sesión para calificar películas', 'warning')
+    return
+  }
+
   userRating.value = rating
   console.log('User rating set to:', rating)
-  // TODO: Send rating to backend
+
+  // Enviar la calificación al backend
+  isSubmittingRating.value = true
+
+  try {
+    const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('idUser')
+    const movieId = movie.value?.idPelicula
+
+    console.log('🔐 Verificando autenticación:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token ? `${token.substring(0, 20)}...${token.substring(token.length - 20)}` : null,
+      userId,
+      movieId
+    })
+
+    if (!token || !userId || !movieId) {
+      throw new Error('Información de autenticación o película no disponible')
+    }
+
+    // Verificar que el token sea válido decodificando el payload
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      console.log('🎫 JWT Payload válido:', {
+        sub: payload.sub,
+        idUsuario: payload.idUsuario,
+        rol: payload.rol,
+        exp: payload.exp,
+        expDate: new Date(payload.exp * 1000).toLocaleString()
+      })
+    } catch (e) {
+      console.error('❌ Token JWT inválido o malformado:', e)
+      throw new Error('Token de sesión inválido. Por favor, inicia sesión nuevamente.')
+    }
+
+    const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+    const url = `${apiBase}/api/v1/voto/numero`
+
+    // Crear el objeto Voto según tu modelo del backend
+    const voto = {
+      idUsuario: parseInt(userId),
+      idPelicula: movieId,
+      puntuacion: rating
+    }
+
+    const votoJson = JSON.stringify(voto)
+    console.log('🎯 Enviando votación:', {
+      movieId,
+      userId,
+      rating,
+      url,
+      voto,
+      votoJson,
+      votoJsonLength: votoJson.length
+    })
+
+    // TEMPORAL: Probar sin Authorization header ya que el backend tiene permitAll()
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    }
+
+    // Solo agregar Authorization si tenemos un token válido
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+      console.log('🔑 Agregando header Authorization al request')
+    } else {
+      console.warn('⚠️ No se agregó header Authorization (token no disponible)')
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: votoJson
+    })
+
+    console.log('📤 Respuesta del servidor (POST voto):', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    })
+
+    // Status 201 = CREATED (nuevo voto)
+    // Status 302 = FOUND (voto actualizado - aunque tu backend usa 302, HTTP estándar es 200)
+    if (response.ok || response.status === 201 || response.status === 302) {
+      console.log('✅ Votación enviada exitosamente - Status:', response.status)
+
+      if (response.status === 201) {
+        showNotification('¡Calificación enviada exitosamente!', 'success')
+      } else if (response.status === 302) {
+        showNotification('¡Calificación actualizada exitosamente!', 'success')
+      } else {
+        showNotification('¡Calificación registrada!', 'success')
+      }
+
+      // Recargar los detalles de la película para obtener la puntuación actualizada
+      // Pero sin recargar el voto del usuario para evitar loop
+      const currentRating = userRating.value
+      await fetchMovieDetail(movieId)
+      userRating.value = currentRating // Mantener la calificación que acaba de dar
+    } else {
+      // Intentar leer el body del error
+      let errorData: { message?: string; error?: string } = {}
+      try {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json()
+        } else {
+          const text = await response.text()
+          errorData = { message: text || `Error ${response.status}` }
+        }
+      } catch {
+        errorData = { message: `Error ${response.status}` }
+      }
+
+      console.error('❌ Error del servidor:', errorData)
+
+      // Mensajes de error específicos según el código HTTP
+      if (response.status === 500) {
+        throw new Error('Error interno del servidor. Por favor, verifica los logs del backend. El voto no pudo ser procesado.')
+      } else if (response.status === 403) {
+        throw new Error('Acceso denegado. Tu sesión puede haber expirado. Por favor, cierra sesión e inicia sesión nuevamente.')
+      } else if (response.status === 401) {
+        throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
+      } else if (response.status === 400) {
+        throw new Error(errorData.message || 'Datos inválidos. Verifica la información enviada.')
+      } else {
+        throw new Error(errorData.message || errorData.error || `Error ${response.status}`)
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error al enviar votación:', err)
+    showNotification(
+      `Error al enviar la calificación: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+      'error'
+    )
+    // Revertir la calificación en caso de error
+    await loadUserRating(movie.value?.idPelicula || 0)
+  } finally {
+    isSubmittingRating.value = false
+  }
+}
+
+function showNotification(message: string, color: string = 'success') {
+  notification.value = {
+    show: true,
+    message,
+    color
+  }
+}
+
+function goToLogin() {
+  router.push('/login')
+}
+
+function handleLogout() {
+  // Limpiar el localStorage
+  localStorage.removeItem('token')
+  localStorage.removeItem('idUser')
+
+  showNotification('Sesión cerrada exitosamente', 'success')
+
+  // Recargar la página para actualizar el estado de autenticación
+  setTimeout(() => {
+    window.location.reload()
+  }, 1000)
 }
 
 // Lifecycle
@@ -531,6 +847,26 @@ onMounted(() => {
   font-size: 0.875rem;
   opacity: 0.7;
   margin-bottom: 32px;
+}
+
+.star-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.star-btn:disabled:hover {
+  transform: none;
+}
+
+.login-link-text {
+  color: rgb(var(--v-theme-primary));
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.login-link-text:hover {
+  color: rgb(var(--v-theme-secondary));
 }
 
 /* Average Rating */
