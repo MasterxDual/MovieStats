@@ -34,6 +34,12 @@
                 </v-btn>
               </template>
               <v-list>
+                <v-list-item v-if="isAdmin" @click="goToAdmin">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-cog</v-icon>
+                  </template>
+                  <v-list-item-title>Administración</v-list-item-title>
+                </v-list-item>
                 <v-list-item @click="handleLogout">
                   <template v-slot:prepend>
                     <v-icon>mdi-logout</v-icon>
@@ -329,6 +335,22 @@ const isLoggedIn = computed(() => {
   const token = localStorage.getItem('token')
   const userId = localStorage.getItem('idUser')
   return !!(token && userId)
+})
+
+// Computed para verificar si el usuario es administrador
+const isAdmin = computed(() => {
+  if (!isLoggedIn.value) return false
+
+  const token = localStorage.getItem('token')
+  if (!token) return false
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.rol === 'ADMIN' || payload.rol === 'admin'
+  } catch (e) {
+    console.error('Error al decodificar token:', e)
+    return false
+  }
 })
 
 // Fetch movie details
@@ -645,6 +667,10 @@ function showNotification(message: string, color: string = 'success') {
 
 function goToLogin() {
   router.push('/login')
+}
+
+function goToAdmin() {
+  router.push({ name: 'Admin' })
 }
 
 function handleLogout() {

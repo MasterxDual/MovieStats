@@ -52,6 +52,12 @@
                 </v-btn>
               </template>
               <v-list>
+                <v-list-item v-if="isAdmin" @click="onAdmin">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-cog</v-icon>
+                  </template>
+                  <v-list-item-title>Administración</v-list-item-title>
+                </v-list-item>
                 <v-list-item @click="handleLogout">
                   <template v-slot:prepend>
                     <v-icon>mdi-logout</v-icon>
@@ -60,11 +66,6 @@
                 </v-list-item>
               </v-list>
             </v-menu>
-
-            <v-btn class="admin-btn" @click="onAdmin">
-              <v-icon class="admin-icon" left>mdi-cog</v-icon>
-              Administración
-            </v-btn>
           </v-col>
         </v-row>
       </v-container>
@@ -210,6 +211,22 @@ const isLoggedIn = computed(() => {
   const token = localStorage.getItem('token')
   const userId = localStorage.getItem('idUser')
   return !!(token && userId)
+})
+
+// Computed para verificar si el usuario es administrador
+const isAdmin = computed(() => {
+  if (!isLoggedIn.value) return false
+
+  const token = localStorage.getItem('token')
+  if (!token) return false
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.rol === 'ADMIN' || payload.rol === 'admin'
+  } catch (e) {
+    console.error('Error al decodificar token:', e)
+    return false
+  }
 })
 
 
@@ -368,7 +385,7 @@ function onLogin() {
 }
 
 function onAdmin() {
-  alert('Administración (ruta no implementada)')
+  router.push({ name: 'Admin' })
 }
 
 function toggleTheme() {

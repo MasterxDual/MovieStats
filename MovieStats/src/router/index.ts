@@ -20,6 +20,10 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
+    redirect: '/index'
+  },
+  {
+    path: '/index',
     name: 'Index',
     component: () => import('../views/IndexView.vue')
   },
@@ -33,7 +37,6 @@ const routes = [
     name: 'Login',
     component: () => import('../views/LoginView.vue')
   },
-  // Ruta de detalle de película
   {
     path: '/movie/:id',
     name: 'MovieDetail',
@@ -42,12 +45,13 @@ const routes = [
   {
     path: '/admin',
     name: 'Admin',
-    component: () => import('../views/AdminView.vue')
+    component: () => import('../views/AdminView.vue'),
+    meta: { requiresAdmin: true }
   },
   // Redirigir cualquier ruta desconocida a la página principal
   {
     path: '/:catchAll(.*)',
-    redirect: '/'
+    redirect: '/index'
   }
 ]
 
