@@ -14,6 +14,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 //   { path: '/', redirect: '/register' },
 //   { path: '/login', component: LoginView },
 //   { path:'/register', name: 'Register', component: RegisterView }
+//   { path:'/admin', name: 'Admin', component: AdminView }
 // ];
 
 const routes = [
@@ -37,6 +38,11 @@ const routes = [
     path: '/movie/:id',
     name: 'MovieDetail',
     component: () => import('../views/MovieDetailView.vue')
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/AdminView.vue')
   },
   // Redirigir cualquier ruta desconocida a la página principal
   {
